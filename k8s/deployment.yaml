@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: wisecow
-          image: wisecow:latest       # For Minikube: build inside Minikube Docker
+          image: ghcr.io/adikesavanaidug2404/wisecow-assignment/wisecow:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4499
           resources:

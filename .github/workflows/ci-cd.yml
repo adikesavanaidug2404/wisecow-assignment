@@ -1,0 +1,42 @@
+name: CI/CD Pipeline - Wisecow
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted   # EC2 self-hosted runner with Minikube
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Log in to GitHub Container Registry (GHCR)
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Build & push image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}/wisecow:latest
+
+      # Step 4: Deploy manifests
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/
+
+      # Step 5: Force rollout restart to ensure latest image is used
+      - name: Restart deployment to pick new image
+        run: |
+          kubectl rollout restart deployment/wisecow-deployment
+          kubectl rollout status deployment/wisecow-deployment --timeout=120s
