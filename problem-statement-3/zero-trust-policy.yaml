@@ -1,0 +1,26 @@
+# Based on my knowledge, I have written a simple zero-trust policy. 
+# It allows a pod to read /app/config.yaml but blocks access to /etc/passwd. 
+# It also permits outgoing HTTPS traffic (port 443) while blocking all other network traffic.
+
+
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: zero-trust-example
+spec:
+  selector:
+    matchLabels:
+      app: my-app
+  file:
+    matchPaths:
+      - path: "/app/config.yaml"
+        action: Allow
+      - path: "/etc/passwd"
+        action: Block
+  network:
+    matchProtocols:
+      - protocol: TCP
+        destinationPorts: [443]
+        action: Allow
+      - protocol: TCP
+        action: Block
